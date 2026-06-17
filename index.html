@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NLH COM Enrollment & Graduation Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #FF8200;
+    --orange-light: #FF9D3B;
+    --orange-pale: #FFF3E6;
+    --navy: #1A2744;
+    --navy-mid: #243560;
+    --navy-light: #2E4280;
+    --slate: #4A5570;
+    --mist: #8A9BB5;
+    --cream: #F7F5F2;
+    --white: #FFFFFF;
+    --border: #DDE2ED;
+    --green: #2E7D5B;
+    --green-light: #EBF5F0;
+    --red: #B03030;
+    --red-light: #FBF0F0;
+    --gold: #C9940A;
+    --gold-light: #FEF9EC;
+    --planning: #6B45A8;
+    --planning-light: #F2EEF9;
+    --shadow: 0 2px 12px rgba(26,39,68,0.10);
+    --shadow-lg: 0 6px 32px rgba(26,39,68,0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--navy); min-height: 100vh; }
+
+  .header {
+    background: var(--navy);
+    padding: 0 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 64px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    flex-wrap: wrap; gap: 10px 20px; padding-top: 10px; padding-bottom: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex-shrink: 1; }
+  .header-logo { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+  .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .header-text { min-width: 0; overflow: hidden; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--white); letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-sub { font-size: 12px; color: var(--mist); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+  .header-badge { background: var(--orange); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; white-space: nowrap; }
+  .header-sem-label { font-size: 12px; color: var(--mist); white-space: nowrap; }
+
+  /* API KEY WIDGET */
+  .api-key-widget {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; padding: 5px 10px; flex-shrink: 0;
+  }
+  .api-key-widget label { font-size: 11px; color: var(--mist); font-weight: 600; white-space: nowrap; letter-spacing: 0.04em; }
+  .api-key-input {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 5px; color: white; font-size: 12px; padding: 4px 8px;
+    font-family: 'DM Mono', monospace; width: 150px; min-width: 90px;
+  }
+  .api-key-input:focus { outline: none; border-color: var(--orange); }
+  .api-key-status { font-size: 14px; flex-shrink: 0; }
+
+  @media(max-width: 900px) {
+    .header { padding-left: 16px; padding-right: 16px; }
+    .header-sub { display: none; }
+    .api-key-input { width: 110px; }
+    .header-sem-label { display: none; }
+  }
+  @media(max-width: 640px) {
+    .api-key-widget label { display: none; }
+    .api-key-input { width: 90px; }
+  }
+
+  .nav-tabs { background: var(--navy-mid); padding: 0 32px; display: flex; gap: 4px; border-bottom: 2px solid var(--navy-light); overflow-x: auto; }
+  .nav-tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--mist); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 0.02em; white-space: nowrap; flex-shrink: 0; }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--orange); }
+
+  .main { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--white); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); border-left: 4px solid var(--orange); }
+  .stat-card.green { border-left-color: var(--green); }
+  .stat-card.gold  { border-left-color: var(--gold); }
+  .stat-card.purple{ border-left-color: var(--planning); }
+  .stat-card.red   { border-left-color: var(--red); }
+  .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--slate); text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--navy); line-height: 1; }
+  .stat-sub { font-size: 12px; color: var(--mist); margin-top: 6px; }
+  .stat-delta { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .stat-delta.up { color: var(--green); }
+  .stat-delta.down { color: var(--red); }
+
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .card-grid.thirds { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.wide { grid-template-columns: 2fr 1fr; }
+  @media(max-width:1100px) { .card-grid,.card-grid.thirds,.card-grid.wide { grid-template-columns: 1fr; } }
+  .card { background: var(--white); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .card-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .card-subtitle { font-size: 12px; color: var(--mist); margin-top: 2px; }
+  .card-body { padding: 16px 20px; }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+  .data-table th { background: var(--navy); color: var(--white); font-weight: 600; font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase; padding: 10px 14px; text-align: left; white-space: nowrap; }
+  .data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+
+  /* STICKY FIRST TWO COLUMNS — keeps row labels visible while scrolling horizontally */
+  .data-table th:nth-child(1), .data-table td:nth-child(1) {
+    position: sticky; left: 0; z-index: 3;
+    min-width: 130px; max-width: 130px;
+    box-shadow: 2px 0 4px -2px rgba(0,0,0,0.15);
+  }
+  .data-table th:nth-child(2), .data-table td:nth-child(2) {
+    position: sticky; left: 130px; z-index: 3;
+    min-width: 64px; max-width: 64px;
+    box-shadow: 2px 0 4px -2px rgba(0,0,0,0.15);
+  }
+  .data-table th:nth-child(1), .data-table th:nth-child(2) { background: var(--navy); z-index: 4; }
+  .data-table td:nth-child(1), .data-table td:nth-child(2) { background: var(--white); }
+  .data-table tr:hover td:nth-child(1), .data-table tr:hover td:nth-child(2) { background: var(--cream); }
+  .data-table tr.past-row td:nth-child(1), .data-table tr.past-row td:nth-child(2) { background: #F0F4FA; }
+  .data-table tr.current-row td:nth-child(1), .data-table tr.current-row td:nth-child(2) { background: #FFF8F0; }
+  .data-table tr.planning-row td:nth-child(1), .data-table tr.planning-row td:nth-child(2) { background: var(--planning-light); }
+  .data-table tr.planning-row:hover td:nth-child(1), .data-table tr.planning-row:hover td:nth-child(2) { background: #E8E2F5; }
+  .data-table tr.total-row td:nth-child(1), .data-table tr.total-row td:nth-child(2) { background: var(--navy); }
+  .data-table tr[style*="background"] td:nth-child(1) { background: var(--cream); }
+  .data-table tr:hover td { background: var(--cream); }
+  .data-table tr.past-row td { background: #F0F4FA; }
+  .data-table tr.current-row td { background: #FFF8F0; border-left: 3px solid var(--orange); }
+  .data-table tr.planning-row td { background: var(--planning-light); }
+  .data-table tr.planning-row:hover td { background: #E8E2F5; }
+  .data-table tr.total-row td { background: var(--navy); color: white; font-weight: 700; }
+
+  .pct-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 3px; min-width: 60px; }
+  .pct-bar-fill { height: 100%; border-radius: 3px; background: var(--orange); }
+  .delta-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .delta-pill.up   { background: var(--green-light);  color: var(--green); }
+  .delta-pill.down { background: var(--red-light);    color: var(--red); }
+  .delta-pill.flat { background: var(--border);       color: var(--slate); }
+
+  /* AI INSIGHTS */
+  .ai-btn {
+    background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
+    color: white; border: 2px solid rgba(255,255,255,0.25);
+    padding: 14px 28px; border-radius: 10px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+    transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 4px 16px rgba(255,130,0,0.4);
+    letter-spacing: 0.01em;
+  }
+  .ai-btn .ai-icon, .ai-btn span:first-child { font-size: 19px; }
+  .ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(255,130,0,0.5); background: linear-gradient(135deg, var(--orange-light) 0%, var(--orange) 100%); }
+  .ai-btn:disabled { opacity: 0.6; cursor: wait; }
+  @media(max-width: 640px) {
+    .ai-btn { padding: 11px 18px; font-size: 14px; }
+    .ai-btn .ai-icon, .ai-btn span:first-child { font-size: 16px; }
+  }
+  .ai-panel { background: linear-gradient(135deg,#F0F3FA 0%,#EBF0FB 100%); border: 1px solid #C5D0E8; border-radius: 12px; padding: 20px 22px; margin-top: 16px; display: none; }
+  .ai-panel.visible { display: block; }
+  .ai-panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .ai-panel-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .ai-panel-badge { background: var(--orange); color: white; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; letter-spacing: 0.06em; }
+  .ai-panel-body .insight-item { display: flex; gap: 10px; margin-bottom: 10px; padding: 10px 14px; background: white; border-radius: 8px; border-left: 3px solid var(--orange); }
+  .ai-panel-body .insight-item.green { border-left-color: var(--green); }
+  .ai-panel-body .insight-item.gold  { border-left-color: var(--gold); }
+  .ai-panel-body .insight-item.purple{ border-left-color: var(--planning); }
+  .insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .insight-text { font-size: 13px; line-height: 1.6; color: var(--navy); }
+  .ai-loading { display: flex; align-items: center; gap: 10px; color: var(--slate); font-size: 13px; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .api-key-warning { background: #FEF9EC; border: 1px solid var(--gold); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--gold); display: flex; align-items: center; gap: 8px; }
+
+  .edit-btn { background: var(--orange-pale); color: var(--orange); border: 1px solid var(--orange); padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .edit-btn:hover { background: var(--orange); color: white; }
+  .edit-btn.active { background: var(--green); border-color: var(--green); color: white; }
+  input.cell-input { width: 58px; padding: 3px 6px; border: 1px solid var(--orange); border-radius: 4px; font-size: 12px; font-family: 'DM Mono', monospace; background: #FFF7F4; color: var(--navy); }
+  input.cell-input:focus { outline: none; border-color: var(--orange-light); box-shadow: 0 0 0 2px var(--orange-pale); }
+  input.cell-input.plan { border-color: var(--planning); background: var(--planning-light); }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .section-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--navy); }
+  .section-meta { font-size: 12px; color: var(--mist); margin-top: 3px; }
+  .scroll-x { overflow-x: auto; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--slate); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .group-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .group-mued { background: #EAF2FF; color: #1E5CB3; }
+  .group-perf { background: #E9F7EF; color: #1A6641; }
+  .group-ba   { background: #FEF9EC; color: #8A6200; }
+  .group-sm   { background: #F3EEF9; color: #6B45A8; }
+  .group-tc   { background: #FFF0EC; color: #C85B2A; }
+  .group-explor { background: #F0F4F9; color: #4A5570; }
+
+  .tooltip { position: fixed; background: var(--navy); color: white; font-size: 12px; padding: 6px 10px; border-radius: 6px; pointer-events: none; white-space: nowrap; z-index: 9999; display: none; }
+  .heatmap-cell { cursor: default; transition: opacity 0.15s; }
+  .heatmap-cell:hover { opacity: 0.75; }
+  .sparkline { display: inline-block; vertical-align: middle; }
+
+  .planning-banner { background: var(--planning-light); border: 1px dashed var(--planning); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: var(--planning); display: flex; align-items: center; gap: 8px; }
+  .current-banner { background: #FFF8F0; border: 1px solid var(--orange); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; color: var(--orange); display: flex; align-items: center; gap: 8px; }
+  .ay-badge { display: inline-block; background: var(--navy); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: 'DM Mono', monospace; }
+
+  .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .filter-chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: white; cursor: pointer; transition: all 0.15s; color: var(--slate); }
+  .filter-chip:hover { border-color: var(--orange); color: var(--orange); }
+  .filter-chip.active { background: var(--orange); border-color: var(--orange); color: white; }
+  .filter-label { font-size: 12px; color: var(--mist); font-weight: 500; }
+
+  .add-sem-form { background: var(--navy); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: none; }
+  .add-sem-form.visible { display: block; }
+  .add-sem-title { font-size: 14px; font-weight: 700; color: white; margin-bottom: 14px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .form-field label { font-size: 11px; color: var(--mist); font-weight: 600; letter-spacing: 0.04em; display: block; margin-bottom: 4px; }
+  .form-field input { width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--navy-light); background: var(--navy-mid); color: white; font-family: 'DM Mono', monospace; font-size: 13px; }
+  .form-field input:focus { outline: none; border-color: var(--orange); }
+  .form-actions { margin-top: 14px; display: flex; gap: 10px; }
+  .btn { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn-primary { background: var(--orange); color: white; }
+  .btn-primary:hover { background: var(--orange-light); }
+  .btn-secondary { background: transparent; color: var(--mist); border: 1px solid var(--navy-light); }
+  .btn-secondary:hover { color: white; border-color: white; }
+
+  .sem-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; font-size: 12px; }
+  .sem-legend-item { display: flex; align-items: center; gap: 6px; }
+  .sem-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo"><img src="data:image/png;base64,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" alt="UT Logo"></div>
+    <div class="header-text">
+      <div class="header-title">NLH COM Enrollment &amp; Graduation Dashboard</div>
+      <div class="header-sub">Natalie L. Haslam College of Music &middot; University of Tennessee Knoxville</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="api-key-widget">
+      <label>CLAUDE API KEY</label>
+      <input class="api-key-input" type="password" id="global-api-key" placeholder="sk-ant-..." oninput="updateApiKeyStatus()">
+      <span class="api-key-status" id="api-key-status" title="Enter your Anthropic API key">🔑</span>
+    </div>
+    <span class="header-badge" id="current-sem-badge">SP26</span>
+    <span class="header-sem-label" id="current-sem-label">Current Semester</span>
+  </div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('overview')">📊 Overview</div>
+  <div class="nav-tab" onclick="switchTab('enrollments')">🎓 Enrollments</div>
+  <div class="nav-tab" onclick="switchTab('trends')">📈 Trends &amp; Analysis</div>
+  <div class="nav-tab" onclick="switchTab('graduations')">🏆 Graduations</div>
+  <div class="nav-tab" onclick="switchTab('planning')">🔭 Planning (2026–2032)</div>
+</div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<div class="main">
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="section active">
+  <div class="section-header">
+    <div>
+      <div class="section-title">College at a Glance</div>
+      <div class="section-meta" id="overview-meta">Snapshot · Planning horizon through SP32</div>
+    </div>
+    <button class="ai-btn" onclick="runAI('overview')"><span>✦</span> AI Insights</button>
+  </div>
+  <div class="stat-row" id="kpi-row"></div>
+  <div class="card-grid wide">
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Total Enrollment Trend</div><div class="card-subtitle">All semesters · Actual + Planned</div></div></div>
+      <div class="card-body">
+        <svg id="trend-chart" class="chart" width="100%" height="240" viewBox="0 0 680 240"></svg>
+        <div class="legend" style="margin-top:10px;">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Past</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange);border:2px solid var(--navy)"></div>Current</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--planning);opacity:0.6"></div>Planned</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Program Group Mix</div><div class="card-subtitle" id="donut-subtitle">Current semester</div></div></div>
+      <div class="card-body">
+        <svg id="donut-chart" class="chart" width="100%" height="200" viewBox="0 0 390 200"></svg>
+      </div>
+    </div>
+  </div>
+  <div class="card-grid thirds">
+    <div class="card">
+      <div class="card-header"><div class="card-title">📈 Fastest Growing Programs</div><div style="font-size:11px;color:var(--mist)" id="growers-sub">YoY FA comparison</div></div>
+      <div class="card-body"><div id="top-growers"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">📉 Declining Programs</div><div style="font-size:11px;color:var(--mist)" id="decliners-sub">YoY FA comparison</div></div>
+      <div class="card-body"><div id="top-decliners"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">🏆 Graduation Summary</div><div style="font-size:11px;color:var(--mist)">All time · by program group</div></div>
+      <div class="card-body"><div id="grad-summary-mini"></div></div>
+    </div>
+  </div>
+  <div class="ai-panel" id="ai-overview">
+    <div class="ai-panel-header"><span style="font-size:20px">✦</span><span class="ai-panel-title">AI Insights — College Overview</span><span class="ai-panel-badge">CLAUDE</span></div>
+    <div class="ai-panel-body" id="ai-overview-body"></div>
+  </div>
+</div>
+
+<!-- ENROLLMENTS -->
+<div id="tab-enrollments" class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Enrollment by Program</div>
+      <div class="section-meta">Editable · Past, Current &amp; Future · % of total · YoY Δ</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="edit-btn" id="edit-enroll-btn" onclick="toggleEditEnroll()">✏️ Edit Mode</button>
+      <button class="btn btn-primary" onclick="toggleAddSem()" style="font-size:12px;padding:6px 14px;">+ Add Semester</button>
+      <button class="ai-btn" onclick="runAI('enrollments')"><span>✦</span> AI Insights</button>
+    </div>
+  </div>
+  <div class="add-sem-form" id="add-sem-form">
+    <div class="add-sem-title">📋 Add New Semester Data</div>
+    <div style="margin-bottom:12px;"><div class="form-field" style="max-width:220px;"><label>SEMESTER LABEL (e.g. FA26)</label><input type="text" id="new-sem-label" placeholder="FA26"></div></div>
+    <div class="form-grid" id="new-sem-fields"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addSemester()">Add Semester</button>
+      <button class="btn btn-secondary" onclick="toggleAddSem()">Cancel</button>
+    </div>
+  </div>
+  <div class="sem-legend">
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:#F0F4FA;border:1px solid var(--border)"></div>Past semesters</div>
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:#FFF8F0;border:2px solid var(--orange)"></div>Current semester</div>
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:var(--planning-light);border:1px dashed var(--planning)"></div>Planned/future</div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Filter:</span>
+    <div class="filter-chip active" onclick="filterGroup('ALL',this)">All</div>
+    <div class="filter-chip" onclick="filterGroup('MUED',this)">MUED</div>
+    <div class="filter-chip" onclick="filterGroup('Perf',this)">Performance</div>
+    <div class="filter-chip" onclick="filterGroup('BA',this)">BA</div>
+    <div class="filter-chip" onclick="filterGroup('SM',this)">Studio Music</div>
+    <div class="filter-chip" onclick="filterGroup('TC',this)">Theory/Comp</div>
+  </div>
+  <div class="card"><div class="card-body" style="padding:0;"><div class="scroll-x"><table class="data-table" id="enroll-table"></table></div></div></div>
+  <div class="ai-panel" id="ai-enrollments">
+    <div class="ai-panel-header"><span style="font-size:20px">✦</span><span class="ai-panel-title">AI Insights — Enrollment Detail</span><span class="ai-panel-badge">CLAUDE</span></div>
+    <div class="ai-panel-body" id="ai-enrollments-body"></div>
+  </div>
+</div>
+
+<!-- TRENDS -->
+<div id="tab-trends" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Trends &amp; Analysis</div><div class="section-meta">Heatmap · YoY · Fall vs Spring · Group share</div></div>
+    <button class="ai-btn" onclick="runAI('trends')"><span>✦</span> AI Insights</button>
+  </div>
+  <div class="card-grid">
+    <div class="card"><div class="card-header"><div class="card-title">Program Enrollment Heatmap</div><div style="font-size:11px;color:var(--mist)">Darker = more students</div></div><div class="card-body" style="padding:12px 16px;"><div class="scroll-x"><svg id="heatmap" height="360" style="display:block;"></svg></div></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Year-over-Year Δ by Program</div><div style="font-size:11px;color:var(--mist)" id="yoy-sub">Latest FA vs prior FA</div></div><div class="card-body" style="padding:12px 16px;"><svg id="yoy-bar" height="360" style="display:block;width:100%;"></svg></div></div>
+  </div>
+  <div class="card-grid">
+    <div class="card"><div class="card-header"><div class="card-title">Fall vs Spring Comparison</div><div style="font-size:11px;color:var(--mist)">Total enrollment by term type</div></div><div class="card-body"><svg id="fs-chart" height="220" style="display:block;width:100%;"></svg></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Program Group Share Over Time</div><div style="font-size:11px;color:var(--mist)">Stacked % of total</div></div><div class="card-body"><svg id="stacked-chart" height="220" style="display:block;width:100%;"></svg></div></div>
+  </div>
+  <div class="ai-panel" id="ai-trends">
+    <div class="ai-panel-header"><span style="font-size:20px">✦</span><span class="ai-panel-title">AI Insights — Trends</span><span class="ai-panel-badge">CLAUDE</span></div>
+    <div class="ai-panel-body" id="ai-trends-body"></div>
+  </div>
+</div>
+
+<!-- GRADUATIONS -->
+<div id="tab-graduations" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Graduations</div><div class="section-meta">By semester · By program · Academic year totals · Past, current &amp; 5-year planning horizon — all editable</div></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="edit-btn" id="edit-grad-btn" onclick="toggleEditGrad()">✏️ Edit Mode</button>
+      <button class="ai-btn" onclick="runAI('graduations')"><span>✦</span> AI Insights</button>
+    </div>
+  </div>
+  <div class="planning-banner">🔭 <strong>Planning Mode:</strong> Graduation projections extend through SU31 (5 years out). Purple rows are projected from recent term-type averages — edit any cell to set your own targets. Current semester shifts automatically by date.</div>
+  <div class="sem-legend">
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:#F0F4FA;border:1px solid var(--border)"></div>Past semesters</div>
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:#FFF8F0;border:2px solid var(--orange)"></div>Current semester</div>
+    <div class="sem-legend-item"><div class="sem-swatch" style="background:var(--planning-light);border:1px dashed var(--planning)"></div>Planned/future</div>
+  </div>
+  <div class="stat-row" id="grad-kpi-row"></div>
+  <div class="card-grid wide">
+    <div class="card"><div class="card-header"><div class="card-title">Graduation Volume by Academic Year</div><div style="font-size:11px;color:var(--mist)">Includes planning horizon through AY14</div></div><div class="card-body"><svg id="grad-ay-chart" height="200" style="display:block;width:100%;"></svg></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Graduates by Program</div><div style="font-size:11px;color:var(--mist)">All time (actual + planned)</div></div><div class="card-body"><div id="grad-prog-list"></div></div></div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Graduation Detail Table</div><div style="font-size:11px;color:var(--mist)">FA17 – SU31 · Past, current &amp; planned</div></div><div class="card-body" style="padding:0;"><div class="scroll-x"><table class="data-table" id="grad-table"></table></div></div></div>
+  <div class="ai-panel" id="ai-graduations">
+    <div class="ai-panel-header"><span style="font-size:20px">✦</span><span class="ai-panel-title">AI Insights — Graduations</span><span class="ai-panel-badge">CLAUDE</span></div>
+    <div class="ai-panel-body" id="ai-graduations-body"></div>
+  </div>
+</div>
+
+<!-- PLANNING -->
+<div id="tab-planning" class="section">
+  <div class="section-header">
+    <div><div class="section-title">Planning Horizon 2026–2032</div><div class="section-meta">10 future semesters · Editable targets · Projected totals</div></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="edit-btn" id="edit-plan-btn" onclick="toggleEditPlan()">✏️ Edit All</button>
+      <button class="ai-btn" onclick="runAI('planning')"><span>✦</span> AI Insights</button>
+    </div>
+  </div>
+  <div class="planning-banner">🔭 <strong>Planning Mode:</strong> Purple columns are projected from trends. All cells are editable — past, current, and future. <strong>Current semester shifts automatically</strong> by date: Jan 1–Jul 30 = Spring · Aug 1–Dec 31 = Fall. FA26 becomes current on Aug 1, 2026.</div>
+  <div class="stat-row" id="plan-kpi-row"></div>
+  <div class="card-grid">
+    <div class="card"><div class="card-header"><div class="card-title">Projected Total Enrollment</div><div style="font-size:11px;color:var(--mist)">Actual + Planning horizon</div></div><div class="card-body"><svg id="plan-trend-chart" height="220" style="display:block;width:100%;"></svg></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Program Growth Trajectories</div><div style="font-size:11px;color:var(--mist)">Top 6 programs through 2032</div></div><div class="card-body"><svg id="plan-prog-chart" height="220" style="display:block;width:100%;"></svg></div></div>
+  </div>
+  <div class="card"><div class="card-header"><div class="card-title">Full Planning Table — All Semesters &amp; Programs</div><div style="font-size:11px;color:var(--mist)">Past · Current · Future — all editable</div></div><div class="card-body" style="padding:0;"><div class="scroll-x"><table class="data-table" id="plan-table"></table></div></div></div>
+  <div class="ai-panel" id="ai-planning">
+    <div class="ai-panel-header"><span style="font-size:20px">✦</span><span class="ai-panel-title">AI Insights — Planning</span><span class="ai-panel-badge">CLAUDE</span></div>
+    <div class="ai-panel-body" id="ai-planning-body"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// =====================================================================
+//  SEMESTER LOGIC — determine current semester by date
+// =====================================================================
+function getCurrentSemester() {
+  const now = new Date();
+  const month = now.getMonth() + 1; // 1-12
+  const year = now.getFullYear();
+  const yr2 = String(year).slice(2);
+  // Jan 1 – Jul 30 = Spring; Aug 1 – Dec 31 = Fall
+  return month <= 7 ? 'SP' + yr2 : 'FA' + yr2;
+}
+
+function semToSortKey(sem) {
+  const m = sem.match(/^(FA|SP|SU)(\d+)$/);
+  if(!m) return 0;
+  const yr = parseInt(m[2]);
+  const t = m[1]==='SP'?1 : m[1]==='SU'?2 : 3;
+  return yr*10 + t;
+}
+
+const CURRENT_SEM = getCurrentSemester();
+
+function semStatus(sem) {
+  // 'past', 'current', or 'future'
+  const cs = semToSortKey(CURRENT_SEM);
+  const ss = semToSortKey(sem);
+  if(ss < cs) return 'past';
+  if(ss === cs) return 'current';
+  return 'future';
+}
+
+// =====================================================================
+//  DATA
+// =====================================================================
+const PROGRAMS = [
+  'MUED WBP','MUED VGV','MUED VGK','MUED Str','MUED Str J','MUED WBP J',
+  'Perf Br','Perf WW','Perf Perc','Perf O','Perf Vocal','Perf Strings','Perf Piano','Perf SMJ',
+  'SM O','SM P','SM V','TC T','TC C',
+  'BA App','BA M&C','BA MBA','BA ADPR','BA JRME','COM Explor'
+];
+const PROG_GROUP = p => {
+  if(p.startsWith('MUED')) return 'MUED';
+  if(p.startsWith('Perf')) return 'Perf';
+  if(p.startsWith('SM'))   return 'SM';
+  if(p.startsWith('TC'))   return 'TC';
+  if(p.startsWith('BA'))   return 'BA';
+  return 'Explor';
+};
+const GROUP_COLORS = { MUED:'#1E5CB3', Perf:'#1A6641', SM:'#6B45A8', TC:'#C85B2A', BA:'#C9940A', Explor:'#4A5570' };
+const GROUP_NAMES  = { MUED:'Music Education', Perf:'Performance', SM:'Studio Music', TC:'Theory/Comp', BA:'Business/Arts', Explor:'COM Exploratory' };
+
+// All semesters — past+current in enrollData, future in planData
+let enrollData = {
+  semesters: ['FA23','SP24','FA24','SP25','FA25','SP26'],
+  rows: [
+    [67,20,0,1,0,1,13,10,3,0,14,18,9,21,0,0,0,3,14,13,3,27,0,0,0],
+    [61,21,0,1,0,1,13,10,4,0,9,17,11,21,0,0,1,3,12,19,6,26,0,0,0],
+    [73,27,0,2,0,1,18,6,6,0,10,15,9,25,0,0,1,0,12,22,3,38,4,0,5],
+    [61,23,0,2,0,2,16,5,8,0,7,17,10,15,0,0,1,0,13,22,3,37,5,1,3],
+    [64,27,1,2,0,3,16,12,6,0,9,17,10,19,0,0,1,1,14,27,3,52,5,1,13],
+    [62,27,0,2,0,2,17,10,6,0,8,15,7,17,0,0,1,1,10,21,3,56,5,1,8]
+  ]
+};
+
+const GRAD_PROGRAMS = [
+  'MUED WBP','MUED VGV','MUED VGK','MUED Str','MUED Str J','MUED WBP J',
+  'Perf Br','Perf WW','Perf O','Perf V','Perf S','Perf P','Perf SMJ',
+  'SM O','SM P','SM V','TC T','TC C','BA App','BA M&C','BA MBA'
+];
+let gradData = {
+  semesters: ['FA17','SP18','SU18','FA18','SP19','SU19','FA19','SP20','SU20',
+              'FA20','SP21','SU21','FA21','SP22','SU22','FA22','SP23','SU23',
+              'FA23','SP24','SU24','FA24','SP25','SU25','FA25','SP26','SU26',
+              'FA26','SP27','SU27','FA27','SP28','SU28','FA28','SP29','SU29',
+              'FA29','SP30','SU30','FA30','SP31','SU31'],
+  ayMap: {FA17:1,SP18:1,SU18:1,FA18:2,SP19:2,SU19:2,FA19:3,SP20:3,SU20:3,
+          FA20:4,SP21:4,SU21:4,FA21:5,SP22:5,SU22:5,FA22:6,SP23:6,SU23:6,
+          FA23:7,SP24:7,SU24:7,FA24:8,SP25:8,SU25:8,FA25:9,SP26:9,SU26:9,
+          FA26:10,SP27:10,SU27:10,FA27:11,SP28:11,SU28:11,FA28:12,SP29:12,SU29:12,
+          FA29:13,SP30:13,SU30:13,FA30:14,SP31:14,SU31:14},
+  rows: [
+    [4,0,0,1,0,0,0,1,0,1,0,0,3,0,0,0,0,2,0,1,0],
+    [5,0,0,0,0,0,1,1,0,5,2,3,3,0,1,0,0,1,1,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0],
+    [5,3,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,2,0,0],
+    [8,3,1,1,0,0,0,3,0,3,2,2,4,0,0,0,0,0,2,0,0],
+    [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+    [3,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,1,0],
+    [8,2,0,1,0,0,1,0,0,0,2,2,4,0,0,1,0,2,0,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0],
+    [2,1,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0],
+    [11,1,0,0,0,0,2,0,1,0,2,1,3,0,0,0,1,2,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+    [7,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [8,3,1,1,0,0,3,0,0,2,6,0,1,1,0,0,0,1,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+    [9,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+    [7,4,0,0,0,0,3,1,0,0,3,1,5,0,0,0,0,1,2,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [3,0,0,0,0,0,1,0,0,1,0,0,2,0,0,0,0,1,1,0,0],
+    [6,1,0,0,0,0,1,4,0,2,4,1,3,0,0,0,0,1,2,2,4],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [8,4,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,1,0,1],
+    [7,2,0,1,0,0,1,1,0,1,3,1,2,0,0,0,0,1,3,1,3],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
+    [1,2,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0],
+    [4,1,0,0,0,0,1,2,0,1,2,1,2,0,0,0,0,1,2,1,2],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0],
+    [4,1,0,0,0,0,1,2,0,1,2,1,2,0,0,0,0,1,2,1,2],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0],
+    [4,1,0,0,0,0,1,2,0,1,2,1,2,0,0,0,0,1,2,1,2],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0],
+    [4,1,0,0,0,0,1,2,0,1,2,1,2,0,0,0,0,1,2,1,2],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [4,2,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,1,0,0],
+    [4,1,0,0,0,0,1,2,0,1,2,1,2,0,0,0,0,1,2,1,2],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  ]
+};
+
+const PLAN_SEMS = ['FA26','SP27','FA27','SP28','FA28','SP29','FA29','SP30','FA30','SP31','FA31','SP32'];
+let planData = null;
+
+// =====================================================================
+//  HELPERS
+// =====================================================================
+const rowTotal = row => row.reduce((a,b) => a+(b||0), 0);
+
+function semYear(sem) {
+  const m = sem.match(/^(FA|SP|SU)(\d+)$/);
+  if(!m) return sem;
+  const [,t,y] = m; const yr = 2000+parseInt(y);
+  return t==='FA'?`Fall ${yr}`:t==='SP'?`Spring ${yr}`:`Summer ${yr}`;
+}
+
+function fmtDelta(n) {
+  if(n===undefined||n===null) return '—';
+  const cls = n>0?'up':n<0?'down':'flat';
+  return `<span class="delta-pill ${cls}">${n>0?'+':''}${n}</span>`;
+}
+
+function getGroupCounts(row) {
+  const total = rowTotal(row);
+  const groups = {};
+  PROGRAMS.forEach((p,i) => { const g=PROG_GROUP(p); groups[g]=(groups[g]||0)+(row[i]||0); });
+  return { groups, total };
+}
+
+function projectRow(prevRow, prevPrevRow) {
+  return PROGRAMS.map((_,i) => {
+    const a=prevRow[i]||0, b=prevPrevRow?(prevPrevRow[i]||0):a;
+    return Math.max(0, Math.round(a + (a-b)*0.5));
+  });
+}
+
+function initPlanData() {
+  const rows = enrollData.rows, n = rows.length;
+  const planned = [];
+  for(let k=0;k<PLAN_SEMS.length;k++) {
+    const prev  = k===0 ? rows[n-1] : planned[k-1];
+    const prev2 = k===0 ? rows[n-2] : (k===1 ? rows[n-1] : planned[k-2]||rows[n-1]);
+    planned.push(projectRow(prev, prev2));
+  }
+  planData = planned.map(r=>[...r]);
+}
+
+function getApiKey() {
+  return document.getElementById('global-api-key').value.trim();
+}
+
+function updateApiKeyStatus() {
+  const k = getApiKey();
+  const el = document.getElementById('api-key-status');
+  if(k.length >= 20) {
+    el.textContent = '✅'; el.title = 'API key set';
+  } else if(k.length > 0) {
+    el.textContent = '⚠️'; el.title = 'Key looks too short';
+  } else {
+    el.textContent = '🔑'; el.title = 'Enter your Anthropic API key';
+  }
+}
+
+// =====================================================================
+//  CURRENT SEMESTER BANNER
+// =====================================================================
+function updateCurrentSemBadge() {
+  document.getElementById('current-sem-badge').textContent = CURRENT_SEM;
+  document.getElementById('current-sem-label').textContent = semYear(CURRENT_SEM) + ' (Current)';
+}
+
+// =====================================================================
+//  TAB NAVIGATION
+// =====================================================================
+function switchTab(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>{
+    if(t.getAttribute('onclick')&&t.getAttribute('onclick').includes("'"+id+"'")) t.classList.add('active');
+  });
+  if(id==='trends') renderTrends();
+  if(id==='planning') renderPlanning();
+}
+
+// =====================================================================
+//  OVERVIEW
+// =====================================================================
+function renderOverview() {
+  const latestActualIdx = enrollData.rows.length-1;
+  const latestRow = enrollData.rows[latestActualIdx];
+  const total = rowTotal(latestRow);
+  const prevIdx = Math.max(0, latestActualIdx-2);
+  const prevTotal = rowTotal(enrollData.rows[prevIdx]);
+  const delta = total-prevTotal;
+  const latestSem = enrollData.semesters[latestActualIdx];
+  const status = semStatus(latestSem);
+
+  document.getElementById('overview-meta').textContent =
+    `Current: ${semYear(CURRENT_SEM)} · Planning horizon through SP32`;
+  document.getElementById('donut-subtitle').textContent = semYear(latestSem);
+
+  const totalGrads = gradData.rows.reduce((a,r)=>a+rowTotal(r),0);
+  const recentGrads = gradData.rows.slice(-3).reduce((a,r)=>a+rowTotal(r),0);
+  const {groups} = getGroupCounts(latestRow);
+  const largestGroup = Object.entries(groups).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('kpi-row').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total Enrollment</div>
+      <div class="stat-value">${total}</div>
+      <div class="stat-sub">${semYear(latestSem)}</div>
+      <div class="stat-delta ${delta>=0?'up':'down'}">${delta>=0?'▲':'▼'} ${Math.abs(delta)} vs ${semYear(enrollData.semesters[prevIdx])}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Current Semester</div>
+      <div class="stat-value">${CURRENT_SEM}</div>
+      <div class="stat-sub">${semYear(CURRENT_SEM)}</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">All-Time Graduates</div>
+      <div class="stat-value">${totalGrads}</div>
+      <div class="stat-sub">${recentGrads} in last 3 semesters</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Largest Group</div>
+      <div class="stat-value">${largestGroup[1]}</div>
+      <div class="stat-sub">${GROUP_NAMES[largestGroup[0]]} (${(largestGroup[1]/total*100).toFixed(0)}%)</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Planning Horizon</div>
+      <div class="stat-value">SP32</div>
+      <div class="stat-sub">10 future semesters projected</div>
+    </div>
+  `;
+
+  renderTrendChart();
+  renderDonutChart(latestRow);
+  renderTopMovers();
+  renderGradMini();
+}
+
+function renderTrendChart() {
+  const svg = document.getElementById('trend-chart');
+  const W=680,H=220,PAD={t:20,r:20,b:40,l:48};
+  const allTotals = enrollData.rows.map(rowTotal);
+  const planTotals = planData.map(rowTotal);
+  const allSems = [...enrollData.semesters,...PLAN_SEMS];
+  const allVals = [...allTotals,...planTotals];
+  const minV=Math.min(...allVals)*0.9, maxV=Math.max(...allVals)*1.06;
+  const n=allSems.length, xStep=(W-PAD.l-PAD.r)/(n-1);
+  const yS=v=>PAD.t+(H-PAD.t-PAD.b)*(1-(v-minV)/(maxV-minV));
+  const xOf=i=>PAD.l+i*xStep;
+  let html='';
+  [0,.25,.5,.75,1].forEach(f=>{
+    const v=minV+f*(maxV-minV),y=yS(v);
+    html+=`<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${y}" y2="${y}" stroke="#DDE2ED" stroke-width="1"/>`;
+    html+=`<text x="${PAD.l-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8A9BB5">${Math.round(v)}</text>`;
+  });
+  const px=xOf(allTotals.length-1);
+  html+=`<rect x="${px}" y="${PAD.t}" width="${W-PAD.r-px}" height="${H-PAD.t-PAD.b}" fill="#F2EEF9" opacity="0.45"/>`;
+  html+=`<path d="${allTotals.map((v,i)=>`${i===0?'M':'L'}${xOf(i)},${yS(v)}`).join(' ')}" fill="none" stroke="var(--orange)" stroke-width="2.5"/>`;
+  const po=allTotals.length-1;
+  html+=`<path d="${[allTotals[po],...planTotals].map((v,i)=>`${i===0?'M':'L'}${xOf(po+i)},${yS(v)}`).join(' ')}" fill="none" stroke="var(--planning)" stroke-width="2" stroke-dasharray="6,4"/>`;
+  allTotals.forEach((v,i)=>{
+    const st=semStatus(enrollData.semesters[i]);
+    const fill=st==='current'?'white':'var(--orange)';
+    const stroke=st==='current'?'var(--orange)':'white';
+    html+=`<circle cx="${xOf(i)}" cy="${yS(v)}" r="${st==='current'?5:4}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`;
+  });
+  planTotals.forEach((v,i)=>{
+    html+=`<circle cx="${xOf(allTotals.length+i)}" cy="${yS(v)}" r="3.5" fill="var(--planning)" stroke="white" stroke-width="1.5" opacity="0.8"/>`;
+  });
+  allSems.forEach((s,i)=>{
+    if(i%2===0) html+=`<text x="${xOf(i)}" y="${H-PAD.b+14}" text-anchor="middle" font-size="9.5" fill="${i>=allTotals.length?'var(--planning)':'#4A5570'}">${s}</text>`;
+  });
+  html+=`<text x="${px+28}" y="${PAD.t+14}" font-size="10" fill="var(--planning)" font-weight="600">Planned →</text>`;
+  svg.innerHTML=html;
+}
+
+function renderDonutChart(row) {
+  const {groups,total} = getGroupCounts(row);
+  const entries=Object.entries(groups).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  const cx=85,cy=100,r=68,ir=40;
+  let html='',startA=0;
+  entries.forEach(([g,v])=>{
+    const sweep=v/total*Math.PI*2;
+    const x1=cx+r*Math.sin(startA),y1=cy-r*Math.cos(startA);
+    const x2=cx+r*Math.sin(startA+sweep),y2=cy-r*Math.cos(startA+sweep);
+    const ix1=cx+ir*Math.sin(startA),iy1=cy-ir*Math.cos(startA);
+    const ix2=cx+ir*Math.sin(startA+sweep),iy2=cy-ir*Math.cos(startA+sweep);
+    const lg=sweep>Math.PI?1:0, col=GROUP_COLORS[g];
+    html+=`<path d="M${ix1},${iy1} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} L${ix2},${iy2} A${ir},${ir} 0 ${lg},0 ${ix1},${iy1}" fill="${col}" opacity="0.88"/>`;
+    startA+=sweep;
+  });
+  html+=`<text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="22" font-weight="700" fill="var(--navy)">${total}</text>`;
+  html+=`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="10" fill="var(--mist)">students</text>`;
+  let ly=26;
+  entries.forEach(([g,v])=>{
+    html+=`<rect x="190" y="${ly-9}" width="9" height="9" rx="2" fill="${GROUP_COLORS[g]}"/>`;
+    html+=`<text x="204" y="${ly}" font-size="10.5" fill="var(--navy)">${GROUP_NAMES[g]}</text>`;
+    html+=`<text x="380" y="${ly}" text-anchor="end" font-size="10.5" font-weight="600" fill="var(--navy)">${v} (${(v/total*100).toFixed(0)}%)</text>`;
+    ly+=22;
+  });
+  document.getElementById('donut-chart').innerHTML=html;
+}
+
+function renderTopMovers() {
+  // Find two most recent FA semesters in actual data
+  const faSems=enrollData.semesters.filter(s=>s.startsWith('FA'));
+  if(faSems.length<2) return;
+  const fa1=faSems[faSems.length-2], fa2=faSems[faSems.length-1];
+  document.getElementById('growers-sub').textContent=`${fa1} → ${fa2}`;
+  document.getElementById('decliners-sub').textContent=`${fa1} → ${fa2}`;
+  const r1=enrollData.rows[enrollData.semesters.indexOf(fa1)];
+  const r2=enrollData.rows[enrollData.semesters.indexOf(fa2)];
+  const deltas=PROGRAMS.map((p,i)=>({p,d:(r2[i]||0)-(r1[i]||0),v1:r1[i]||0,v2:r2[i]||0}));
+  const growers=[...deltas].sort((a,b)=>b.d-a.d).filter(x=>x.d>0).slice(0,5);
+  const decliners=[...deltas].sort((a,b)=>a.d-b.d).filter(x=>x.d<0).slice(0,5);
+  const makeList=arr=>arr.map(x=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+      <div style="font-size:12.5px;font-weight:500">${x.p}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--mist)">${x.v1}→${x.v2}</span>
+        ${fmtDelta(x.d)}
+      </div>
+    </div>`).join('');
+  document.getElementById('top-growers').innerHTML=makeList(growers);
+  document.getElementById('top-decliners').innerHTML=makeList(decliners);
+}
+
+function renderGradMini() {
+  const totals={};
+  GRAD_PROGRAMS.forEach((p,i)=>{
+    const g=PROG_GROUP(p);
+    totals[g]=(totals[g]||0)+gradData.rows.reduce((a,r)=>a+(r[i]||0),0);
+  });
+  const overall=Object.values(totals).reduce((a,b)=>a+b,0);
+  let html='';
+  Object.entries(totals).sort((a,b)=>b[1]-a[1]).forEach(([g,v])=>{
+    html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:8px;height:8px;border-radius:2px;background:${GROUP_COLORS[g]||'#888'};flex-shrink:0"></div>
+        <span style="font-size:12px;font-weight:500">${GROUP_NAMES[g]||g}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="pct-bar-bg" style="width:50px"><div class="pct-bar-fill" style="width:${v/overall*100}%;background:${GROUP_COLORS[g]}"></div></div>
+        <span style="font-size:12px;font-weight:700;min-width:24px;text-align:right">${v}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('grad-summary-mini').innerHTML=html;
+}
+
+// =====================================================================
+//  ENROLLMENTS TABLE
+// =====================================================================
+let enrollEditMode=false, enrollFilter='ALL';
+
+function renderEnrollTable() {
+  const sems=enrollData.semesters;
+  const rows=enrollData.rows;
+  const visProgs=PROGRAMS.filter(p=>{
+    if(enrollFilter==='ALL') return true;
+    if(enrollFilter==='MUED') return p.startsWith('MUED');
+    if(enrollFilter==='Perf') return p.startsWith('Perf');
+    if(enrollFilter==='BA')   return p.startsWith('BA');
+    if(enrollFilter==='SM')   return p.startsWith('SM');
+    if(enrollFilter==='TC')   return p.startsWith('TC');
+    return true;
+  });
+
+  let head=`<thead><tr><th>Program</th><th>Group</th>`;
+  sems.forEach((s,si)=>{
+    const st=semStatus(s);
+    const color    = st==='current'?'var(--orange)':st==='future'?'#9B7FD4':'#8A9BB5';
+    const bgOver   = st==='current'?'rgba(255,130,0,0.12)':st==='future'?'rgba(107,69,168,0.12)':'transparent';
+    const marker   = st==='current'?' ●':st==='future'?' ✦':'';
+    const subLabel = st==='current'?'CURRENT':st==='future'?'PLANNED':'PAST';
+    head+=`<th style="color:${color};background:${bgOver};text-align:center;">${s}${marker}<br><span style="font-weight:400;font-size:9px;opacity:0.75;letter-spacing:0.05em">${subLabel} · Count · %</span></th>`;
+    if(si>0) head+=`<th style="background:var(--navy-mid);font-size:10px;text-align:center;">Δ</th>`;
+  });
+  head+=`<th style="text-align:center;">Trend</th></tr></thead>`;
+
+  let body='<tbody>';
+  visProgs.forEach(prog=>{
+    const pi=PROGRAMS.indexOf(prog);
+    const g=PROG_GROUP(prog);
+    const hasData=rows.some(r=>(r[pi]||0)>0);
+    if(!hasData && enrollFilter==='ALL') return;
+    let cells='';
+    rows.forEach((row,si)=>{
+      const v=row[pi]||0;
+      const total=rowTotal(row);
+      const pctStr=total?(v/total*100).toFixed(1)+'%':'—';
+      const st=semStatus(sems[si]);
+      if(enrollEditMode) {
+        cells+=`<td><input class="cell-input" type="number" min="0" value="${v}" onchange="updateEnrollCell(${si},${pi},this.value)"></td>`;
+      } else {
+        cells+=`<td>
+          <div style="font-weight:600;font-size:13px">${v||'—'}</div>
+          <div style="font-size:10px;color:var(--mist)">${v?pctStr:''}</div>
+        </td>`;
+      }
+      if(si>0) {
+        const d=(row[pi]||0)-(rows[si-1][pi]||0);
+        cells+=`<td style="background:#FAFBFD">${(v||(rows[si-1][pi]||0))?fmtDelta(d):'—'}</td>`;
+      }
+    });
+    const vals=rows.map(r=>r[pi]||0);
+    const maxV=Math.max(...vals,1);
+    const pts=vals.map((v,i)=>`${i*(36/(vals.length-1))},${12-v/maxV*10}`).join(' ');
+    const spark=`<svg width="38" height="14" class="sparkline"><polyline points="${pts}" fill="none" stroke="var(--orange)" stroke-width="1.5"/></svg>`;
+    const gClass=`group-${g.toLowerCase().replace('/','').replace('&','')}`;
+    const rowStatus=semStatus(sems[sems.length-1]); // color the row by latest data status
+    body+=`<tr>
+      <td style="font-weight:600;font-size:12.5px">${prog}</td>
+      <td><span class="group-tag group-${g.toLowerCase()}">${g}</span></td>
+      ${cells}
+      <td>${spark}</td>
+    </tr>`;
+  });
+
+  // Totals
+  body+=`<tr class="total-row"><td colspan="2">TOTAL</td>`;
+  rows.forEach((row,si)=>{
+    const t=rowTotal(row);
+    body+=`<td>${t}</td>`;
+    if(si>0) body+=`<td>${fmtDelta(t-rowTotal(rows[si-1]))}</td>`;
+  });
+  body+=`<td></td></tr>`;
+  body+='</tbody>';
+  document.getElementById('enroll-table').innerHTML=head+body;
+}
+
+function updateEnrollCell(si,pi,val) {
+  enrollData.rows[si][pi]=parseInt(val)||0;
+  renderOverview(); renderEnrollTable(); initPlanData();
+}
+
+function toggleEditEnroll() {
+  enrollEditMode=!enrollEditMode;
+  const btn=document.getElementById('edit-enroll-btn');
+  btn.textContent=enrollEditMode?'✅ Done Editing':'✏️ Edit Mode';
+  btn.classList.toggle('active',enrollEditMode);
+  renderEnrollTable();
+}
+
+function filterGroup(g,el) {
+  enrollFilter=g;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  renderEnrollTable();
+}
+
+function toggleAddSem() {
+  const f=document.getElementById('add-sem-form');
+  f.classList.toggle('visible');
+  if(f.classList.contains('visible')) {
+    let html='';
+    PROGRAMS.forEach((p,i)=>{ html+=`<div class="form-field"><label>${p}</label><input type="number" min="0" value="0" id="newsem_${i}"></div>`; });
+    document.getElementById('new-sem-fields').innerHTML=html;
+  }
+}
+
+function addSemester() {
+  const label=document.getElementById('new-sem-label').value.trim().toUpperCase();
+  if(!label){alert('Enter a semester label (e.g. FA26)');return;}
+  if(enrollData.semesters.includes(label)){alert('Semester already exists');return;}
+  const vals=PROGRAMS.map((_,i)=>parseInt(document.getElementById('newsem_'+i).value)||0);
+  enrollData.semesters.push(label);
+  enrollData.rows.push(vals);
+  toggleAddSem();
+  initPlanData();
+  renderAll();
+}
+
+// =====================================================================
+//  TRENDS
+// =====================================================================
+function renderTrends() { renderHeatmap(); renderYoyBar(); renderFsChart(); renderStackedChart(); }
+
+function renderHeatmap() {
+  const sems=enrollData.semesters, rows=enrollData.rows;
+  const allVals=rows.flatMap(r=>r);
+  const maxV=Math.max(...allVals,1);
+  const cellW=64,cellH=24,labelW=110,topH=34;
+  const svgW=labelW+sems.length*cellW+10;
+  const svgH=topH+PROGRAMS.length*cellH+10;
+  let html='';
+  sems.forEach((s,si)=>{
+    const st=semStatus(s);
+    const fill=st==='current'?'var(--orange)':st==='future'?'var(--planning)':'#4A5570';
+    html+=`<text x="${labelW+si*cellW+cellW/2}" y="${topH-8}" text-anchor="middle" font-size="13" fill="${fill}" font-weight="${st==='current'?700:500}">${s}</text>`;
+  });
+  PROGRAMS.forEach((p,pi)=>{
+    const y=topH+pi*cellH, g=PROG_GROUP(p);
+    html+=`<text x="${labelW-6}" y="${y+16}" text-anchor="end" font-size="13" fill="${GROUP_COLORS[g]||'#333'}">${p}</text>`;
+    sems.forEach((s,si)=>{
+      const v=rows[si][pi]||0, intensity=v/maxV, col=GROUP_COLORS[g]||'#1A2744';
+      html+=`<rect x="${labelW+si*cellW+1}" y="${y+1}" width="${cellW-3}" height="${cellH-2}" rx="3" fill="${col}" opacity="${0.08+intensity*0.85}" class="heatmap-cell" onmouseover="showTip(event,'${p} ${s}: ${v} students')" onmouseout="hideTip()"/>`;
+      if(v>0) html+=`<text x="${labelW+si*cellW+cellW/2}" y="${y+16}" text-anchor="middle" font-size="12.5" fill="${intensity>0.5?'white':'var(--navy)'}" pointer-events="none">${v}</text>`;
+    });
+  });
+  const svg=document.getElementById('heatmap');
+  svg.setAttribute('width',svgW); svg.setAttribute('height',svgH);
+  svg.setAttribute('viewBox',`0 0 ${svgW} ${svgH}`);
+  svg.innerHTML=html;
+}
+
+function renderYoyBar() {
+  const faSems=enrollData.semesters.filter(s=>s.startsWith('FA'));
+  if(faSems.length<2) return;
+  const fa1=faSems[faSems.length-2], fa2=faSems[faSems.length-1];
+  document.getElementById('yoy-sub').textContent=`${fa1} vs ${fa2}`;
+  const r1=enrollData.rows[enrollData.semesters.indexOf(fa1)];
+  const r2=enrollData.rows[enrollData.semesters.indexOf(fa2)];
+  const deltas=PROGRAMS.map((p,i)=>({p,d:(r2[i]||0)-(r1[i]||0)})).filter(x=>x.d!==0).sort((a,b)=>b.d-a.d);
+  const svg=document.getElementById('yoy-bar');
+  const W=svg.getBoundingClientRect().width||500;
+  const barH=22, rowGap=4;
+  const PAD={t:10,b:30,l:115,r:30};
+  const H=Math.max(360, PAD.t+PAD.b+deltas.length*(barH+rowGap));
+  const maxD=Math.max(...deltas.map(x=>Math.abs(x.d)),1);
+  const mid=PAD.l+(W-PAD.l-PAD.r)/2;
+  let html=`<line x1="${mid}" y1="${PAD.t}" x2="${mid}" y2="${H-PAD.b}" stroke="#DDE2ED" stroke-width="1"/>`;
+  deltas.forEach(({p,d},i)=>{
+    const y=PAD.t+i*(barH+rowGap), bw=Math.abs(d)/maxD*((W-PAD.l-PAD.r)/2-4);
+    const col=d>0?'var(--green)':'var(--red)', x=d>=0?mid:mid-bw;
+    html+=`<text x="${PAD.l-8}" y="${y+barH/2+5}" text-anchor="end" font-size="13" fill="var(--slate)">${p}</text>`;
+    html+=`<rect x="${x}" y="${y}" width="${bw}" height="${barH}" rx="3" fill="${col}" opacity="0.8"/>`;
+    if(bw>18) html+=`<text x="${d>=0?x+bw+5:x-5}" y="${y+barH/2+5}" text-anchor="${d>=0?'start':'end'}" font-size="12.5" fill="${col}" font-weight="600">${d>0?'+':''}${d}</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+function renderFsChart() {
+  const svg=document.getElementById('fs-chart');
+  const W=svg.getBoundingClientRect().width||500;
+  const H=220,PAD={t:24,b:44,l:56,r:24};
+  const pts=enrollData.semesters.map((s,i)=>({s,total:rowTotal(enrollData.rows[i]),isFall:s.startsWith('FA')}));
+  const maxV=Math.max(...pts.map(x=>x.total))*1.1||1;
+  const n=pts.length, xS=(W-PAD.l-PAD.r)/(n-1);
+  const yS=v=>PAD.t+(H-PAD.t-PAD.b)*(1-v/maxV);
+  let html='';
+  [0,.5,1].forEach(f=>{
+    const v=f*maxV,y=yS(v);
+    html+=`<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${y}" y2="${y}" stroke="#DDE2ED" stroke-width="1"/>`;
+    html+=`<text x="${PAD.l-6}" y="${y+5}" text-anchor="end" font-size="13" fill="#8A9BB5">${Math.round(v)}</text>`;
+  });
+  const fa=pts.filter(x=>x.s.startsWith('FA')), sp=pts.filter(x=>x.s.startsWith('SP'));
+  const mkPath=(arr,col)=>{
+    const d=arr.map(({s,total})=>`${arr.indexOf(arr.find(a=>a.s===s))===0?'M':'L'}${PAD.l+pts.findIndex(p=>p.s===s)*xS},${yS(total)}`).join(' ');
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.5" opacity="0.85"/>`;
+  };
+  html+=mkPath(fa,'var(--navy)'); html+=mkPath(sp,'var(--orange)');
+  pts.forEach(({s,total},i)=>{
+    const col=s.startsWith('FA')?'var(--navy)':'var(--orange)';
+    html+=`<circle cx="${PAD.l+i*xS}" cy="${yS(total)}" r="5" fill="${col}" stroke="white" stroke-width="2"/>`;
+    if(i%2===0) html+=`<text x="${PAD.l+i*xS}" y="${H-PAD.b+18}" text-anchor="middle" font-size="12.5" fill="#4A5570">${s}</text>`;
+  });
+  html+=`<text x="${W-PAD.r}" y="${PAD.t-6}" text-anchor="end" font-size="13" fill="var(--navy)" font-weight="700">■ Fall</text>`;
+  html+=`<text x="${W-PAD.r}" y="${PAD.t+12}" text-anchor="end" font-size="13" fill="var(--orange)" font-weight="700">■ Spring</text>`;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+function renderStackedChart() {
+  const svg=document.getElementById('stacked-chart');
+  const W=svg.getBoundingClientRect().width||500;
+  const H=220,PAD={t:14,b:44,l:56,r:96};
+  const groups=['MUED','Perf','BA','TC','SM','Explor'];
+  const sems=enrollData.semesters, rows=enrollData.rows, n=sems.length;
+  const xStep=(W-PAD.l-PAD.r)/(n-1);
+  const semGroups=rows.map(row=>{
+    const total=rowTotal(row)||1, g={};
+    PROGRAMS.forEach((p,i)=>{const gr=PROG_GROUP(p);g[gr]=(g[gr]||0)+(row[i]||0);});
+    Object.keys(g).forEach(k=>g[k]=g[k]/total);
+    return g;
+  });
+  let html='';
+  const labelPositions=[];
+  groups.forEach((g,gi)=>{
+    const col=GROUP_COLORS[g]||'#888';
+    let topPts=[],botPts=[];
+    sems.forEach((_,si)=>{
+      const x=PAD.l+si*xStep;
+      let bot=0;
+      for(let j=0;j<gi;j++) bot+=(semGroups[si][groups[j]]||0);
+      const top=bot+(semGroups[si][g]||0);
+      topPts.push({x,y:PAD.t+(H-PAD.t-PAD.b)*(1-top)});
+      botPts.push({x,y:PAD.t+(H-PAD.t-PAD.b)*(1-bot)});
+    });
+    const area=[...topPts,...[...botPts].reverse()].map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ')+'Z';
+    html+=`<path d="${area}" fill="${col}" opacity="0.75"/>`;
+    const mid=topPts[n-1].y+(botPts[n-1].y-topPts[n-1].y)/2;
+    if((semGroups[n-1][g]||0)>0.04) labelPositions.push({g,col,y:mid});
+  });
+  // Collision-avoid: sort by y, then push overlapping labels apart (min 16px gap)
+  labelPositions.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labelPositions.length;i++){
+    if(labelPositions[i].y - labelPositions[i-1].y < 16) {
+      labelPositions[i].y = labelPositions[i-1].y + 16;
+    }
+  }
+  labelPositions.forEach(({g,col,y})=>{
+    html+=`<text x="${W-PAD.r+6}" y="${y+5}" font-size="13" fill="${col}" font-weight="700">${g}</text>`;
+  });
+  sems.forEach((s,i)=>{
+    if(i%2===0) html+=`<text x="${PAD.l+i*xStep}" y="${H-PAD.b+18}" text-anchor="middle" font-size="12.5" fill="#4A5570">${s}</text>`;
+  });
+  [0,.5,1].forEach(f=>{
+    html+=`<text x="${PAD.l-6}" y="${PAD.t+(H-PAD.t-PAD.b)*(1-f)+5}" text-anchor="end" font-size="13" fill="#8A9BB5">${(f*100).toFixed(0)}%</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+// =====================================================================
+//  GRADUATIONS
+// =====================================================================
+let gradEditMode=false;
+
+function renderGraduations() {
+  const totalGrads=gradData.rows.reduce((a,r)=>a+rowTotal(r),0);
+  const actualTotal=gradData.semesters.reduce((sum,s,i)=> semStatus(s)!=='future' ? sum+rowTotal(gradData.rows[i]) : sum, 0);
+  const plannedTotal=totalGrads-actualTotal;
+  const byAY={};
+  gradData.semesters.forEach((s,i)=>{
+    const ay=gradData.ayMap[s]||0;
+    byAY[ay]=(byAY[ay]||0)+rowTotal(gradData.rows[i]);
+  });
+  // Only consider AY's with actual (past/current) data for peak/avg, so projected zeros don't skew historicals
+  const actualAYs={};
+  gradData.semesters.forEach((s,i)=>{
+    if(semStatus(s)==='future') return;
+    const ay=gradData.ayMap[s]||0;
+    actualAYs[ay]=(actualAYs[ay]||0)+rowTotal(gradData.rows[i]);
+  });
+  const ayVals=Object.values(actualAYs).filter(x=>x>0);
+  const maxAY=Math.max(...ayVals), avgAY=ayVals.reduce((a,b)=>a+b,0)/ayVals.length;
+  const topProg=GRAD_PROGRAMS.map((p,i)=>({p,v:gradData.rows.reduce((a,r)=>a+(r[i]||0),0)})).sort((a,b)=>b.v-a.v)[0];
+  document.getElementById('grad-kpi-row').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Graduates To Date</div><div class="stat-value">${actualTotal}</div><div class="stat-sub">Through ${CURRENT_SEM}</div></div>
+    <div class="stat-card green"><div class="stat-label">Peak Academic Year</div><div class="stat-value">${maxAY}</div><div class="stat-sub">Highest single AY (actual)</div></div>
+    <div class="stat-card gold"><div class="stat-label">Avg / Academic Year</div><div class="stat-value">${avgAY.toFixed(1)}</div><div class="stat-sub">Academic year average (actual)</div></div>
+    <div class="stat-card purple"><div class="stat-label">Top Program</div><div class="stat-value">${topProg.v}</div><div class="stat-sub">${topProg.p}</div></div>
+    <div class="stat-card red"><div class="stat-label">Planned Through SU31</div><div class="stat-value">${plannedTotal}</div><div class="stat-sub">Projected future graduates</div></div>
+  `;
+  renderGradAyChart(byAY);
+  renderGradProgList();
+  renderGradTable();
+}
+
+function renderGradAyChart(byAY) {
+  const svg=document.getElementById('grad-ay-chart');
+  const W=svg.getBoundingClientRect().width||500;
+  const H=200,PAD={t:20,b:40,l:40,r:20};
+  const entries=Object.entries(byAY).filter(([,v])=>v>0).sort((a,b)=>+a[0]-+b[0]);
+  const n=entries.length, barW=(W-PAD.l-PAD.r)/n-4, maxV=Math.max(...entries.map(([,v])=>v),1);
+  // Determine if an AY is entirely future (planned) by checking its member semesters
+  const ayIsFuture = ay => gradData.semesters.every(s => gradData.ayMap[s]!=+ay || semStatus(s)==='future');
+  let html='';
+  entries.forEach(([ay,v],i)=>{
+    const x=PAD.l+i*((W-PAD.l-PAD.r)/n);
+    const bh=(v/maxV)*(H-PAD.t-PAD.b), y=H-PAD.b-bh;
+    const isFuture=ayIsFuture(ay);
+    const col=isFuture?'var(--planning)':'var(--navy)';
+    html+=`<rect x="${x+2}" y="${y}" width="${barW}" height="${bh}" rx="3" fill="${col}" opacity="0.8" ${isFuture?'stroke="var(--planning)" stroke-dasharray="3,2" stroke-width="1.5"':''}/>`;
+    html+=`<text x="${x+barW/2+2}" y="${y-4}" text-anchor="middle" font-size="10" fill="${col}" font-weight="600">${v}</text>`;
+    html+=`<text x="${x+barW/2+2}" y="${H-PAD.b+14}" text-anchor="middle" font-size="9.5" fill="${isFuture?'var(--planning)':'#4A5570'}">AY${ay}${isFuture?'*':''}</text>`;
+  });
+  [0,.5,1].forEach(f=>{
+    html+=`<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${PAD.t+(H-PAD.t-PAD.b)*(1-f)}" y2="${PAD.t+(H-PAD.t-PAD.b)*(1-f)}" stroke="#DDE2ED" stroke-width="1"/>`;
+    html+=`<text x="${PAD.l-4}" y="${PAD.t+(H-PAD.t-PAD.b)*(1-f)+4}" text-anchor="end" font-size="10" fill="#8A9BB5">${Math.round(f*maxV)}</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+function renderGradProgList() {
+  const totals=GRAD_PROGRAMS.map((p,i)=>({p,v:gradData.rows.reduce((a,r)=>a+(r[i]||0),0)})).sort((a,b)=>b.v-a.v).filter(x=>x.v>0);
+  const maxV=totals[0]?.v||1, overall=totals.reduce((a,x)=>a+x.v,0);
+  let html='<div style="max-height:180px;overflow-y:auto;">';
+  totals.forEach(({p,v})=>{
+    const g=PROG_GROUP(p);
+    html+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
+      <div style="width:8px;height:8px;border-radius:2px;background:${GROUP_COLORS[g]||'#888'};flex-shrink:0"></div>
+      <div style="font-size:12px;font-weight:500;flex:1">${p}</div>
+      <div class="pct-bar-bg" style="width:60px"><div class="pct-bar-fill" style="width:${v/maxV*100}%;background:${GROUP_COLORS[g]}"></div></div>
+      <span style="font-size:12px;font-weight:700;min-width:20px;text-align:right">${v}</span>
+      <span style="font-size:10px;color:var(--mist);min-width:36px">${(v/overall*100).toFixed(1)}%</span>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('grad-prog-list').innerHTML=html;
+}
+
+function renderGradTable() {
+  const sems=gradData.semesters, rows=gradData.rows;
+  let head=`<thead><tr><th>Semester</th><th>AY</th>`;
+  GRAD_PROGRAMS.forEach(p=>{ head+=`<th>${p}</th>`; });
+  head+=`<th>Total</th></tr></thead>`;
+  let body='<tbody>', prevAY=null;
+
+  // Precompute which AYs are entirely future (for subtotal row styling)
+  const ayIsFuture = ay => sems.every(s => gradData.ayMap[s]!=ay || semStatus(s)==='future');
+
+  // Track running subtotal for the AY currently being rendered
+  let ayProgSums = GRAD_PROGRAMS.map(()=>0);
+  let ayTotal = 0;
+
+  const flushAYSubtotal = (ay) => {
+    if(ay===null || ayTotal===0 && ayProgSums.every(v=>v===0)) { ayProgSums = GRAD_PROGRAMS.map(()=>0); ayTotal=0; return; }
+    const isFuture = ayIsFuture(ay);
+    const col = isFuture ? 'var(--planning)' : 'var(--navy)';
+    const bg = isFuture ? 'rgba(107,69,168,0.10)' : 'rgba(26,39,68,0.06)';
+    body+=`<tr style="background:${bg};"><td colspan="2" style="font-weight:700;font-size:11.5px;color:${col};text-transform:uppercase;letter-spacing:0.04em;">AY${ay} Subtotal</td>`;
+    GRAD_PROGRAMS.forEach((_,pi)=>{ body+=`<td style="font-weight:700;color:${col};text-align:center;">${ayProgSums[pi]||'—'}</td>`; });
+    body+=`<td style="font-weight:800;color:${col};background:rgba(0,0,0,0.04);">${ayTotal}</td></tr>`;
+    ayProgSums = GRAD_PROGRAMS.map(()=>0);
+    ayTotal = 0;
+  };
+
+  sems.forEach((s,si)=>{
+    const ay=gradData.ayMap[s]||'', row=rows[si]||[], total=rowTotal(row);
+    const st=semStatus(s);
+
+    // Accumulate into AY subtotal regardless of row visibility (so hidden empty past summers still count)
+    if(ay!==prevAY && prevAY!==null) flushAYSubtotal(prevAY);
+    GRAD_PROGRAMS.forEach((_,pi)=>{ ayProgSums[pi]+=(row[pi]||0); });
+    ayTotal+=total;
+    prevAY=ay;
+
+    // Hide empty PAST rows when not editing (keeps old summer terms collapsed);
+    // always show current and future rows so the planning horizon is visible.
+    if(!total && !gradEditMode && st==='past') return;
+    const ayLabel=`<span class="ay-badge">AY${ay}</span>`;
+    const rowClass = st==='current' ? ' class="current-row"' : st==='future' ? ' class="planning-row"' : ' class="past-row"';
+    const semLabelColor = st==='current' ? 'var(--orange)' : st==='future' ? 'var(--planning)' : 'inherit';
+    const statusTag = st==='current' ? ' <span style="font-size:9px;color:var(--orange);font-weight:700;">● CURRENT</span>' : st==='future' ? ' <span style="font-size:9px;color:var(--planning);font-weight:700;">✦ PLANNED</span>' : '';
+    body+=`<tr${rowClass}><td style="font-weight:600;font-size:12.5px;color:${semLabelColor}">${semYear(s)}${statusTag}<br><span style="font-size:10px;color:var(--mist)">${s}</span></td><td>${ayLabel}</td>`;
+    GRAD_PROGRAMS.forEach((_,pi)=>{
+      const v=row[pi]||0;
+      if(gradEditMode) {
+        const cls = st==='future' ? 'cell-input plan' : 'cell-input';
+        body+=`<td><input class="${cls}" type="number" min="0" value="${v}" onchange="updateGradCell(${si},${pi},this.value)"></td>`;
+      } else {
+        body+=`<td style="color:${v>0?'var(--navy)':'#CCC'};text-align:center">${v||'—'}</td>`;
+      }
+    });
+    body+=`<td style="font-weight:700;background:#F7F5F2">${total||'—'}</td></tr>`;
+  });
+  flushAYSubtotal(prevAY);
+  body+=`<tr class="total-row"><td colspan="2">TOTALS</td>`;
+  GRAD_PROGRAMS.forEach((_,pi)=>{ body+=`<td>${rows.reduce((a,r)=>a+(r[pi]||0),0)||'—'}</td>`; });
+  body+=`<td>${rows.reduce((a,r)=>a+rowTotal(r),0)}</td></tr>`;
+  body+='</tbody>';
+  document.getElementById('grad-table').innerHTML=head+body;
+}
+
+function updateGradCell(si,pi,val) { gradData.rows[si][pi]=parseInt(val)||0; renderGraduations(); }
+
+function toggleEditGrad() {
+  gradEditMode=!gradEditMode;
+  const btn=document.getElementById('edit-grad-btn');
+  btn.textContent=gradEditMode?'✅ Done Editing':'✏️ Edit Mode';
+  btn.classList.toggle('active',gradEditMode);
+  renderGraduations();
+}
+
+// =====================================================================
+//  PLANNING
+// =====================================================================
+let planEditMode=false;
+
+function renderPlanning() {
+  const planTotals=planData.map(rowTotal);
+  const actTotals=enrollData.rows.map(rowTotal);
+  const lastActual=actTotals[actTotals.length-1];
+  const trend=planTotals[planTotals.length-1]-lastActual;
+  document.getElementById('plan-kpi-row').innerHTML=`
+    <div class="stat-card purple"><div class="stat-label">Current Enrollment</div><div class="stat-value">${lastActual}</div><div class="stat-sub">${enrollData.semesters[enrollData.semesters.length-1]}</div></div>
+    <div class="stat-card green"><div class="stat-label">SP32 Projection</div><div class="stat-value">${planTotals[planTotals.length-1]}</div><div class="stat-sub">10 semesters out</div></div>
+    <div class="stat-card gold"><div class="stat-label">Projected Range</div><div class="stat-value">${Math.min(...planTotals)}–${Math.max(...planTotals)}</div><div class="stat-sub">Min/Max horizon</div></div>
+    <div class="stat-card ${trend>=0?'green':'red'}"><div class="stat-label">Net Trend SP26→SP32</div><div class="stat-value">${trend>=0?'+':''}${trend}</div><div class="stat-sub">Total enrollment change</div></div>
+  `;
+  renderPlanTrendChart();
+  renderPlanProgChart();
+  renderPlanTable();
+}
+
+function renderPlanTrendChart() {
+  const svg=document.getElementById('plan-trend-chart');
+  const W=svg.getBoundingClientRect().width||500;
+  const H=220,PAD={t:20,b:40,l:48,r:20};
+  const actTotals=enrollData.rows.map(rowTotal);
+  const planTotals=planData.map(rowTotal);
+  const allSems=[...enrollData.semesters,...PLAN_SEMS];
+  const allVals=[...actTotals,...planTotals];
+  const minV=Math.min(...allVals)*0.9, maxV=Math.max(...allVals)*1.08;
+  const n=allSems.length, xStep=(W-PAD.l-PAD.r)/(n-1);
+  const yS=v=>PAD.t+(H-PAD.t-PAD.b)*(1-(v-minV)/(maxV-minV));
+  const xOf=i=>PAD.l+i*xStep;
+  let html='';
+  const px=xOf(actTotals.length-1);
+  html+=`<rect x="${px}" y="${PAD.t}" width="${W-PAD.r-px}" height="${H-PAD.t-PAD.b}" fill="var(--planning-light)" opacity="0.6"/>`;
+  for(let i=0;i<=4;i++){
+    const v=minV+i*(maxV-minV)/4, y=yS(v);
+    html+=`<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${y}" y2="${y}" stroke="#DDE2ED" stroke-width="1"/>`;
+    html+=`<text x="${PAD.l-4}" y="${y+4}" text-anchor="end" font-size="10" fill="#8A9BB5">${Math.round(v)}</text>`;
+  }
+  const actPts=actTotals.map((v,i)=>({x:xOf(i),y:yS(v)}));
+  html+=`<polygon points="${actPts.map(p=>`${p.x},${p.y}`).join(' ')} ${actPts[actPts.length-1].x},${H-PAD.b} ${PAD.l},${H-PAD.b}" fill="var(--orange)" opacity="0.1"/>`;
+  html+=`<path d="${actTotals.map((v,i)=>`${i===0?'M':'L'}${xOf(i)},${yS(v)}`).join(' ')}" fill="none" stroke="var(--orange)" stroke-width="2.5"/>`;
+  const po=actTotals.length-1;
+  html+=`<path d="${[actTotals[po],...planTotals].map((v,i)=>`${i===0?'M':'L'}${xOf(po+i)},${yS(v)}`).join(' ')}" fill="none" stroke="var(--planning)" stroke-width="2.5" stroke-dasharray="6,3"/>`;
+  allSems.forEach((s,i)=>{
+    const v=i<actTotals.length?actTotals[i]:planTotals[i-actTotals.length];
+    const st=semStatus(s);
+    const fill=st==='current'?'white':(i<actTotals.length?'var(--orange)':'var(--planning)');
+    const stroke=st==='current'?'var(--orange)':(i<actTotals.length?'white':'white');
+    html+=`<circle cx="${xOf(i)}" cy="${yS(v)}" r="${st==='current'?5:4}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    if(i%2===0||i===allSems.length-1) html+=`<text x="${xOf(i)}" y="${H-PAD.b+14}" text-anchor="middle" font-size="9" fill="${i<actTotals.length?'#4A5570':'var(--planning)'}">${s}</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+function renderPlanProgChart() {
+  const svg=document.getElementById('plan-prog-chart');
+  const W=svg.getBoundingClientRect().width||500;
+  const H=220,PAD={t:20,b:40,l:48,r:80};
+  const curRow=enrollData.rows[enrollData.rows.length-1];
+  const top6=PROGRAMS.map((p,i)=>({p,i,v:curRow[i]||0})).sort((a,b)=>b.v-a.v).slice(0,6);
+  const allSems=[...enrollData.semesters,...PLAN_SEMS];
+  const n=allSems.length, xStep=(W-PAD.l-PAD.r)/(n-1), actN=enrollData.semesters.length;
+  const allVals=top6.flatMap(({i})=>[...enrollData.rows.map(r=>r[i]||0),...planData.map(r=>r[i]||0)]);
+  const maxV=Math.max(...allVals,1);
+  const yS=v=>PAD.t+(H-PAD.t-PAD.b)*(1-v/maxV);
+  const xOf=i=>PAD.l+i*xStep;
+  const COLORS=['#C85B2A','#1E5CB3','#1A6641','#C9940A','#6B45A8','#4A5570'];
+  let html='';
+  html+=`<rect x="${xOf(actN-1)}" y="${PAD.t}" width="${W-PAD.r-60-xOf(actN-1)}" height="${H-PAD.t-PAD.b}" fill="var(--planning-light)" opacity="0.4"/>`;
+  const labelPositions=[];
+  top6.forEach(({p,i},ki)=>{
+    const col=COLORS[ki];
+    const actVals=enrollData.rows.map(r=>r[i]||0);
+    const planVals=planData.map(r=>r[i]||0);
+    html+=`<path d="${actVals.map((v,j)=>`${j===0?'M':'L'}${xOf(j)},${yS(v)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="1.8"/>`;
+    html+=`<path d="${[actVals[actVals.length-1],...planVals].map((v,j)=>`${j===0?'M':'L'}${xOf(actN-1+j)},${yS(v)}`).join(' ')}" fill="none" stroke="${col}" stroke-width="1.8" stroke-dasharray="4,3" opacity="0.7"/>`;
+    labelPositions.push({p,col,y:yS(planVals[planVals.length-1])});
+  });
+  labelPositions.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labelPositions.length;i++){
+    if(labelPositions[i].y - labelPositions[i-1].y < 12) {
+      labelPositions[i].y = labelPositions[i-1].y + 12;
+    }
+  }
+  labelPositions.forEach(({p,col,y})=>{
+    html+=`<text x="${W-PAD.r-58}" y="${y+4}" font-size="9.5" fill="${col}" font-weight="600">${p}</text>`;
+  });
+  allSems.forEach((s,i)=>{
+    if(i%2===0||i===n-1) html+=`<text x="${xOf(i)}" y="${H-PAD.b+14}" text-anchor="middle" font-size="9" fill="${i<actN?'#4A5570':'var(--planning)'}">${s}</text>`;
+  });
+  [0,.5,1].forEach(f=>{
+    html+=`<text x="${PAD.l-4}" y="${PAD.t+(H-PAD.t-PAD.b)*(1-f)+4}" text-anchor="end" font-size="10" fill="#8A9BB5">${Math.round(f*maxV)}</text>`;
+  });
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.innerHTML=html;
+}
+
+function renderPlanTable() {
+  // Combined table: all actual semesters + all plan semesters, all editable
+  const actSems=enrollData.semesters;
+  const allSems=[...actSems,...PLAN_SEMS];
+  const allRows=[...enrollData.rows,...planData];
+  const table=document.getElementById('plan-table');
+
+  let head=`<thead><tr><th>Program</th><th>Group</th>`;
+  allSems.forEach((s)=>{
+    const st=semStatus(s);
+    const color  = st==='current' ? 'var(--orange)' : st==='future' ? '#9B7FD4' : '#8A9BB5';
+    const bgOver = st==='current' ? 'rgba(255,130,0,0.12)' : st==='future' ? 'rgba(107,69,168,0.12)' : 'transparent';
+    const marker = st==='current' ? ' ●' : st==='future' ? ' ✦' : '';
+    const subLabel = st==='current' ? 'CURRENT' : st==='future' ? 'PLANNED' : 'PAST';
+    head+=`<th style="color:${color};background:${bgOver};text-align:center;">${s}${marker}<br><span style="font-weight:400;font-size:9px;opacity:0.75;letter-spacing:0.05em">${subLabel}</span></th>`;
+  });
+  head+=`</tr></thead>`;
+
+  let body='<tbody>';
+  PROGRAMS.forEach((p,pi)=>{
+    const hasAny=allRows.some(r=>(r[pi]||0)>0);
+    if(!hasAny) return;
+    const g=PROG_GROUP(p);
+    body+=`<tr><td style="font-weight:600;font-size:12px">${p}</td><td><span class="group-tag group-${g.toLowerCase()}">${g}</span></td>`;
+    allSems.forEach((s,si)=>{
+      const v=allRows[si][pi]||0;
+      const st=semStatus(s);
+      const isFuture=st==='future';
+      const isCurrent=st==='current';
+      if(planEditMode) {
+        const cls=isFuture?'cell-input plan':'cell-input';
+        const handler=si<actSems.length
+          ?`updateEnrollCell(${si},${pi},this.value)`
+          :`updatePlanCell(${si-actSems.length},${pi},this.value)`;
+        body+=`<td${isCurrent?' style="border-left:3px solid var(--orange)"':''}><input class="${cls}" type="number" min="0" value="${v}" onchange="${handler}"></td>`;
+      } else {
+        let tdStyle = `text-align:center;font-family:'DM Mono',monospace;font-size:12px;`;
+        if(isCurrent)       tdStyle += `background:#FFF8F0;border-left:3px solid var(--orange);color:var(--navy);font-weight:700;`;
+        else if(isFuture)   tdStyle += `background:var(--planning-light);color:var(--planning);`;
+        else                tdStyle += `background:#F4F6FA;color:var(--slate);`;
+        body+=`<td style="${tdStyle}">${v||'—'}</td>`;
+      }
+    });
+    body+='</tr>';
+  });
+  body+=`<tr class="total-row"><td colspan="2">TOTAL</td>`;
+  allRows.forEach(row=>{ body+=`<td>${rowTotal(row)}</td>`; });
+  body+=`</tr></tbody>`;
+  table.innerHTML=head+body;
+}
+
+function updatePlanCell(planIdx,pi,val) {
+  planData[planIdx][pi]=parseInt(val)||0;
+  renderPlanning();
+}
+
+function toggleEditPlan() {
+  planEditMode=!planEditMode;
+  const btn=document.getElementById('edit-plan-btn');
+  btn.textContent=planEditMode?'✅ Done Editing':'✏️ Edit All';
+  btn.classList.toggle('active',planEditMode);
+  renderPlanTable();
+}
+
+// =====================================================================
+//  TOOLTIP
+// =====================================================================
+function showTip(e,text) {
+  const t=document.getElementById('tooltip');
+  t.style.display='block'; t.textContent=text;
+  t.style.left=(e.clientX+12)+'px'; t.style.top=(e.clientY-30)+'px';
+}
+function hideTip() { document.getElementById('tooltip').style.display='none'; }
+
+// =====================================================================
+//  AI INSIGHTS
+// =====================================================================
+async function runAI(section) {
+  const key=getApiKey();
+  const panel=document.getElementById('ai-'+section);
+  const body=document.getElementById('ai-'+section+'-body');
+  panel.classList.add('visible');
+
+  if(!key || key.length < 20) {
+    body.innerHTML=`<div class="api-key-warning">⚠️ <strong>API key required.</strong> Enter your Anthropic API key in the header above to use AI Insights. Your key is never stored — it only lives in this browser session.</div>`;
+    return;
+  }
+
+  body.innerHTML='<div class="ai-loading"><div class="spinner"></div>Analyzing enrollment and graduation data…</div>';
+  const summaryData=buildAISummary(section);
+  try {
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        system:`You are an expert higher education enrollment analyst for a music college. Produce 4-6 concise, actionable insights for academic administrators. Format each as: [EMOJI] **[Bold headline]**: 1-2 sentence insight with specific numbers. Use: 📈 growth, 📉 decline, ⚠️ risk, 🎯 opportunity, 💡 recommendation, 🏆 strength, 🔭 projection. Be direct and reference exact numbers. The current semester is ${CURRENT_SEM} (${semYear(CURRENT_SEM)}).`,
+        messages:[{role:'user',content:`Analyze this NLH COM (Natalie L. Haslam College of Music at UTK) ${section} data:\n\n${summaryData}`}]
+      })
+    });
+    if(!response.ok) {
+      const err=await response.json().catch(()=>({error:{message:response.statusText}}));
+      throw new Error(err.error?.message||response.statusText);
+    }
+    const data=await response.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'No response.';
+    body.innerHTML=formatAIResponse(text);
+  } catch(err) {
+    body.innerHTML=`<div class="api-key-warning">⚠️ <strong>Error:</strong> ${err.message}. Check your API key and try again.</div>`;
+  }
+}
+
+function buildAISummary(section) {
+  let s='';
+  const actSems=enrollData.semesters, actRows=enrollData.rows;
+  if(['overview','enrollments','trends'].includes(section)) {
+    s+=`CURRENT SEMESTER: ${CURRENT_SEM} (${semYear(CURRENT_SEM)})\nENROLLMENT DATA:\n`;
+    actSems.forEach((sem,si)=>{
+      const row=actRows[si], total=rowTotal(row);
+      s+=`${sem} (${semStatus(sem)}): Total=${total}\n`;
+      PROGRAMS.forEach((p,pi)=>{ if(row[pi]) s+=`  ${p}: ${row[pi]} (${(row[pi]/total*100).toFixed(1)}%)\n`; });
+    });
+  }
+  if(section==='graduations') {
+    s+=`CURRENT SEMESTER: ${CURRENT_SEM} (${semYear(CURRENT_SEM)})\nGRADUATION DATA (past, current, and 5-year planning horizon through SU31):\n`;
+    gradData.semesters.forEach((sem,si)=>{
+      const total=rowTotal(gradData.rows[si]);
+      const st=semStatus(sem);
+      if(total>0) {
+        s+=`${sem} (${st}, AY${gradData.ayMap[sem]}): ${total} graduates\n`;
+        GRAD_PROGRAMS.forEach((p,pi)=>{ if(gradData.rows[si][pi]) s+=`  ${p}: ${gradData.rows[si][pi]}\n`; });
+      }
+    });
+  }
+  if(section==='planning') {
+    s+=`CURRENT: ${CURRENT_SEM}\nLAST ACTUAL: FA25=${rowTotal(actRows[actRows.length-2])}, SP26=${rowTotal(actRows[actRows.length-1])}\nPLANNING PROJECTIONS:\n`;
+    PLAN_SEMS.forEach((sem,i)=>{ s+=`${sem}: ${rowTotal(planData[i])} (projected)\n`; });
+  }
+  return s;
+}
+
+function formatAIResponse(text) {
+  const lines=text.split('\n').filter(l=>l.trim());
+  let html='';
+  lines.forEach(line=>{
+    const t=line.trim(); if(!t) return;
+    let cls='';
+    if(t.includes('📈')||t.includes('🏆')) cls='green';
+    else if(t.includes('🎯')||t.includes('💡')) cls='gold';
+    else if(t.includes('🔭')) cls='purple';
+    const icon=t.match(/^(\S+)\s/)?.[1]||'💡';
+    const formatted=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+    html+=`<div class="insight-item ${cls}"><div class="insight-icon">${icon}</div><div class="insight-text">${formatted.replace(/^\S+\s/,'')}</div></div>`;
+  });
+  return html||`<div class="insight-text">${text}</div>`;
+}
+
+// =====================================================================
+//  INIT
+// =====================================================================
+function renderAll() {
+  initPlanData();
+  updateCurrentSemBadge();
+  renderOverview();
+  renderEnrollTable();
+  renderGraduations();
+}
+
+renderAll();
+</script>
+</body>
+</html>
